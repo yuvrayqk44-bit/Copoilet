@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SHADMAN AI VOICE - Pro Max</title>
+    
+    <!-- External Resources -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           1. CSS VARIABLES & THEMING SYSTEM
+           ========================================================================== */
+        :root {
+            /* Dark Theme Colors (Default) */
+            --bg-main: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-glass: rgba(17, 24, 39, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            
+            --primary: #00d2ff;
+            --primary-glow: rgba(0, 210, 255, 0.4);
+            --secondary: #3a7bd5;
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            --msg-user-bg: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            --msg-user-text: #ffffff;
+            --msg-ai-bg: #1f2937;
+            --msg-ai-text: #f3f4f6;
+            
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            
+            /* Typography & Layout */
+            --font-en: 'Inter', sans-serif;
+            --font-bn: 'Hind Siliguri', sans-serif;
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --border-radius-sm: 8px;
+            
+            /* Transitions */
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-spring: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f3f4f6;
+            --bg-secondary: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.8);
+            --border-glass: rgba(0, 0, 0, 0.08);
+            
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            
+            --msg-user-bg: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            --msg-ai-bg: #ffffff;
+            --msg-ai-text: #111827;
+            
+            --primary-glow: rgba(14, 165, 233, 0.3);
+        }
+
+        /* ==========================================================================
+           2. RESET & BASE STYLES
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-en);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh; /* For mobile browsers */
+            overflow: hidden;
+            display: flex;
+            transition: background-color var(--transition-fast), color var(--transition-fast);
+        }
+
+        button, input, select {
+            font-family: inherit;
+            outline: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ==========================================================================
+           3. BACKGROUND ANIMATIONS
+           ========================================================================== */
+        .bg-elements {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+
+        .blob-1 {
+            top: -10%; left: -10%;
+            width: 50vw; height: 50vw;
+            background: var(--primary);
+        }
+
+        .blob-2 {
+            bottom: -10%; right: -10%;
+            width: 40vw; height: 40vw;
+            background: var(--secondary);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10%, 10%) scale(1.1); }
+            100% { transform: translate(-10%, 20%) scale(0.9); }
+        }
+
+        /* ==========================================================================
+           4. SIDEBAR (HISTORY & SETTINGS)
+           ========================================================================== */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        #sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-fast);
+            position: relative;
+            z-index: 20;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all var(--transition-fast);
+        }
+
+        .new-chat-btn:hover {
+            background: var(--bg-glass);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .history-item {
+            padding: 12px 15px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            transition: background var(--transition-fast);
+            margin-bottom: 5px;
+        }
+
+        .history-item:hover {
+            background: var(--bg-glass);
+            color: var(--text-main);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        /* Mobile Sidebar Override */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                left: -280px;
+                height: 100%;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+            #sidebar.open {
+                transform: translateX(280px);
+            }
+        }
+
+        /* ==========================================================================
+           5. MAIN CONTENT AREA
+           ========================================================================== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(20px);
+            position: relative;
+        }
+
+        /* Header */
+        header {
+            height: 70px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-glass);
+            border-bottom: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .menu-btn { display: block; }
+        }
+
+        .brand-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-status {
+            font-size: 0.75rem;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .header-actions button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            transition: all var(--transition-fast);
+        }
+
+        .header-actions button:hover {
+            color: var(--primary);
+            background: var(--bg-glass);
+        }
+
+        /* ==========================================================================
+           6. CHAT INTERFACE & ANIMATIONS
+           ========================================================================== */
+        #chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 10px;
+            animation: message-pop var(--transition-spring) forwards;
+            opacity: 0;
+        }
+
+        @keyframes message-pop {
+            0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .row-ai { justify-content: flex-start; transform-origin: left bottom; }
+        .row-user { justify-content: flex-end; transform-origin: right bottom; }
+
+        .message-content {
+            display: flex;
+            gap: 12px;
+            max-width: 80%;
+        }
+
+        .row-user .message-content { flex-direction: row-reverse; }
+
+        /* Avatars */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .avatar-ai {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            color: var(--primary);
+        }
+
+        .avatar-user {
+            background: var(--msg-user-bg);
+            color: white;
+        }
+
+        /* Message Bubbles */
+        .bubble {
+            padding: 14px 18px;
+            font-size: 1rem;
+            line-height: 1.5;
+            font-family: var(--font-bn); /* Important for Bengali text */
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .bubble-ai {
+            background: var(--msg-ai-bg);
+            color: var(--msg-ai-text);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--border-radius-md) var(--border-radius-md) var(--border-radius-md) 4px;
+        }
+
+        .bubble-user {
+            background: var(--msg-user-bg);
+            color: var(--msg-user-text);
+            border-radius: var(--border-radius-md) var(--border-radius-md) 4px var(--border-radius-md);
+        }
+
+        /* Typography inside bubble */
+        .bubble p { margin-bottom: 8px; }
+        .bubble p:last-child { margin-bottom: 0; }
+        .bubble strong { color: var(--primary); font-weight: 600; }
+
+        /* Timestamp & Actions */
+        .msg-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: var(--font-en);
+        }
+
+        .row-user .msg-meta { justify-content: flex-end; }
+        .row-ai .msg-meta { justify-content: flex-start; }
+
+        .action-icon {
+            cursor: pointer;
+            transition: color var(--transition-fast);
+        }
+        .action-icon:hover { color: var(--primary); }
+
+        /* Typing Indicator */
+        .typing-container {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .typing-bubble {
+            background: var(--msg-ai-bg);
+            padding: 12px 18px;
+            border-radius: 20px 20px 20px 4px;
+            display: flex;
+            gap: 5px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .typing-dot {
+            width: 6px; height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(-4px); opacity: 1; background: var(--primary); }
+        }
+
+        /* ==========================================================================
+           7. BOTTOM CONTROLS & VISUALIZER
+           ========================================================================== */
+        .control-area {
+            padding: 20px;
+            background: linear-gradient(to top, var(--bg-main) 50%, transparent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Audio Visualizer Canvas */
+        #audio-visualizer {
+            width: 100%;
+            height: 60px;
+            position: absolute;
+            bottom: 100px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #audio-visualizer.active { opacity: 1; }
+
+        .status-display {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        /* Ultimate Mic Button */
+        .mic-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .mic-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-glass);
+            color: var(--primary);
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 5;
+            transition: all var(--transition-spring);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mic-btn:hover {
+            transform: scale(1.05);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px var(--primary-glow);
+        }
+
+        /* Listening State */
+        .mic-btn.listening {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+            animation: mic-pulse-danger 1.5s infinite;
+        }
+
+        /* Processing State */
+        .mic-btn.processing {
+            background: var(--warning);
+            color: white;
+            border-color: var(--warning);
+            animation: mic-spin 2s linear infinite;
+        }
+
+        /* Speaking State */
+        .mic-btn.speaking {
+            background: var(--msg-user-bg);
+            color: white;
+            border: none;
+            animation: mic-pulse-primary 2s infinite;
+        }
+
+        /* Button Animations */
+        @keyframes mic-pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes mic-pulse-primary {
+            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); transform: scale(1); }
+            50% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); transform: scale(1.1); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); transform: scale(1); }
+        }
+
+        @keyframes mic-spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .keyboard-hint {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* ==========================================================================
+           8. MODALS & OVERLAYS
+           ========================================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-fast);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: var(--bg-main);
+            width: 90%;
+            max-width: 450px;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-glass);
+            padding: 30px;
+            transform: translateY(30px) scale(0.95);
+            transition: all var(--transition-spring);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: var(--bg-secondary);
+            border: none;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .close-btn:hover { background: var(--danger); color: white; }
+
+        /* Form Controls */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: border-color var(--transition-fast);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            margin-top: 10px;
+        }
+
+        .btn-primary { background: var(--msg-user-bg); color: white; }
+        .btn-primary:hover { box-shadow: 0 5px 15px var(--primary-glow); }
+        
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        /* ==========================================================================
+           9. TOAST NOTIFICATIONS
+           ========================================================================== */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            padding: 12px 24px;
+            border-radius: 30px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: toast-in var(--transition-spring) forwards;
+        }
+
+        .toast.error i { color: var(--danger); }
+        .toast.success i { color: var(--success); }
+        .toast.info i { color: var(--primary); }
+
+        .toast.hide { animation: toast-out 0.3s ease-in forwards; }
+
+        @keyframes toast-in {
+            0% { opacity: 0; transform: translateY(-50px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toast-out {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.9); }
+        }
+
+        /* ==========================================================================
+           10. WELCOME / ONBOARDING SCREEN
+           ========================================================================== */
+        #welcome-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-main);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            transition: opacity 0.5s ease;
+        }
+
+        #welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .robot-logo {
+            font-size: 5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 20px var(--primary-glow));
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, #a0aec0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-subtitle { color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Elements -->
+    <div class="bg-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <i class="fa-solid fa-robot robot-logo"></i>
+        <h1 class="welcome-title">GenAI Voice Assistant</h1>
+        <p class="welcome-subtitle">রিয়েল-টাইম এআই এসিস্ট্যান্ট। কথা বলুন বাংলায় বা ইংরেজিতে।</p>
+        <button class="btn btn-primary start-btn" onclick="app.startApp()">
+            <i class="fa-solid fa-microphone"></i> Start Assistant
+        </button>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="app.clearChat()">
+                    <i class="fa-solid fa-plus"></i> New Conversation
+                </button>
+                <button class="menu-btn" onclick="app.toggleSidebar()" style="width: auto; padding: 0 10px;">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="history-list" id="history-list">
+                <!-- History Items will be injected here via JS -->
+                <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                    হিস্ট্রি এখানে জমা হবে
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="history-item" onclick="app.openSettings()">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Header -->
+            <header>
+                <div class="header-left">
+                    <button class="menu-btn" onclick="app.toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="brand-info">
+                        <span class="brand-title">GenAI Pro Max</span>
+                        <span class="brand-status"><div class="pulse-dot"></div> System Online</span>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button onclick="app.toggleTheme()" id="theme-btn" title="Toggle Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button onclick="app.openSettings()" title="Settings">
+                        <i class="fa-solid fa-sliders"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Window -->
+            <div id="chat-window">
+                <!-- Initial AI Greeting -->
+                <div class="message-row row-ai">
+                    <div class="message-content">
+                        <div class="avatar avatar-ai"><i class="fa-solid fa-robot"></i></div>
+                        <div>
+                            <div class="bubble bubble-ai">
+                                <p>হ্যালো! আমি আপনার <strong>এআই এসিস্ট্যান্ট</strong>। আমি আপনাকে কীভাবে সাহায্য করতে পারি?</p>
+                            </div>
+                            <div class="msg-meta">
+                                <span>Just now</span>
+                                <i class="fa-solid fa-volume-high action-icon" onclick="app.speakText('হ্যালো! আমি আপনার এআই এসিস্ট্যান্ট। আমি আপনাকে কীভাবে সাহায্য করতে পারি?')"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator Container -->
+                <div class="message-row row-ai typing-container" id="typing-indicator">
+                    <div class="message-content">
+                        <div class="avatar avatar-ai"><i class="fa-solid fa-robot"></i></div>
+                        <div class="typing-bubble">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Area -->
+            <div class="control-area">
+                <!-- Real Canvas Visualizer -->
+                <canvas id="audio-visualizer"></canvas>
+
+                <div class="status-display" id="status-text">Ready to listen</div>
+                
+                <div class="mic-wrapper">
+                    <button class="mic-btn" id="mic-btn" onclick="app.toggleMic()">
+                        <i class="fa-solid fa-microphone" id="mic-icon"></i>
+                    </button>
+                </div>
+                <div class="keyboard-hint">Tap the mic icon to start speaking</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Preferences</h2>
+                <button class="close-btn" onclick="app.closeSettings()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="form-group">
+                <label>Language / ভাষা</label>
+                <select class="form-control" id="setting-lang">
+                    <option value="bn-BD">বাংলা (Bengali)</option>
+                    <option value="en-US">English (US)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Voice Speed</label>
+                <select class="form-control" id="setting-speed">
+                    <option value="0.8">Slow (0.8x)</option>
+                    <option value="1" selected>Normal (1.0x)</option>
+                    <option value="1.2">Fast (1.2x)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="app.saveSettings()">Save Settings</button>
+            <button class="btn btn-danger" onclick="app.clearChat()">Delete All History</button>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         JAVASCRIPT LOGIC (The Brains)
+         ========================================================================== -->
+    <script>
+        /**
+         * Utility Class for UI Notifications
+         */
+        class UIManager {
+            static showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                let icon = 'fa-info-circle';
+                if(type === 'error') icon = 'fa-exclamation-circle';
+                if(type === 'success') icon = 'fa-check-circle';
+
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+                container.appendChild(toast);
+
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.add('hide');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            static formatTime() {
+                const now = new Date();
+                let hours = now.getHours();
+                let minutes = now.getMinutes();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                return `${hours}:${minutes} ${ampm}`;
+            }
+
+            // Simple Markdown Parser for Chat Bubbles
+            static parseMarkdown(text) {
+                let html = text;
+                // Bold
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                // Italic
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                // Line breaks
+                html = html.replace(/\n/g, '<br>');
+                return html;
+            }
+        }
+
+        /**
+         * Canvas Based Advanced Audio Visualizer
+         */
+        class Visualizer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.animationId = null;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = this.canvas.parentElement.clientWidth;
+                this.canvas.height = 60;
+            }
+
+            // Simulate frequency data since we can't easily hook into TTS Audio context securely across all browsers
+            startSimulation(color = '#00d2ff') {
+                this.canvas.classList.add('active');
+                let time = 0;
+                
+                const draw = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    const centerY = this.canvas.height / 2;
+                    const points = 50;
+                    const step = this.canvas.width / points;
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, centerY);
+
+                    for(let i = 0; i <= points; i++) {
+                        const x = i * step;
+                        // Math sin wave formula combining multiple frequencies for natural look
+                        const y = centerY + Math.sin(i * 0.5 + time) * 15 * Math.sin(time * 0.5) 
+                                        + Math.cos(i * 0.2 - time) * 10;
+                        
+                        this.ctx.lineTo(x, y);
+                    }
+
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.stroke();
+
+                    // Glow effect
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = color;
+
+                    time += 0.15;
+                    this.animationId = requestAnimationFrame(draw);
+                };
+                
+                if(!this.animationId) draw();
+            }
+
+            stop() {
+                this.canvas.classList.remove('active');
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+                setTimeout(() => this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height), 300);
+            }
+        }
+
+        /**
+         * Main Application Class
+         */
+        class AIVoiceAssistant {
+            constructor() {
+                // DOM Elements
+                this.micBtn = document.getElementById('mic-btn');
+                this.micIcon = document.getElementById('mic-icon');
+                this.statusText = document.getElementById('status-text');
+                this.chatWindow = document.getElementById('chat-window');
+                this.typingIndicator = document.getElementById('typing-indicator');
+                this.sidebar = document.getElementById('sidebar');
+                
+                // State Variables
+                this.state = 'idle'; // idle | listening | processing | speaking
+                this.language = 'bn-BD';
+                this.voiceSpeed = 1.0;
+                this.isDarkTheme = true;
+                
+                // APIs provided by user
+                this.LLM_API = 'https://r-gengpt-api.vercel.app/api/chat?prompt=';
+                this.TTS_API = 'https://text2-voice-api.vercel.app/text=';
+
+                // Modules
+                this.visualizer = new Visualizer('audio-visualizer');
+                this.audioPlayer = new Audio();
+                this.recognition = null;
+
+                this.setupAudioEvents();
+            }
+
+            // 1. Initialization
+            startApp() {
+                document.getElementById('welcome-screen').classList.add('hidden');
+                this.initSpeechRecognition();
+                this.loadSettings();
+                UIManager.showToast('System Initialized Successfully', 'success');
+            }
+
+            // 2. Settings & Theme Management
+            loadSettings() {
+                const savedLang = localStorage.getItem('ai_lang');
+                if(savedLang) {
+                    this.language = savedLang;
+                    document.getElementById('setting-lang').value = savedLang;
+                }
+                
+                const savedTheme = localStorage.getItem('ai_theme');
+                if(savedTheme === 'light') this.toggleTheme(true);
+            }
+
+            openSettings() {
+                document.getElementById('settings-modal').classList.add('active');
+                if(window.innerWidth <= 768) this.toggleSidebar(); // close sidebar on mobile
+            }
+
+            closeSettings() {
+                document.getElementById('settings-modal').classList.remove('active');
+            }
+
+            saveSettings() {
+                this.language = document.getElementById('setting-lang').value;
+                this.voiceSpeed = parseFloat(document.getElementById('setting-speed').value);
+                localStorage.setItem('ai_lang', this.language);
+                
+                // Update Recognition language if exists
+                if(this.recognition) this.recognition.lang = this.language;
+                
+                this.closeSettings();
+                UIManager.showToast('Settings Saved', 'success');
+            }
+
+            toggleTheme(forceLight = false) {
+                const root = document.documentElement;
+                const icon = document.querySelector('#theme-btn i');
+                
+                if(forceLight || this.isDarkTheme) {
+                    root.setAttribute('data-theme', 'light');
+                    icon.className = 'fa-solid fa-sun';
+                    this.isDarkTheme = false;
+                    localStorage.setItem('ai_theme', 'light');
+                } else {
+                    root.setAttribute('data-theme', 'dark');
+                    icon.className = 'fa-solid fa-moon';
+                    this.isDarkTheme = true;
+                    localStorage.setItem('ai_theme', 'dark');
+                }
+            }
+
+            toggleSidebar() {
+                this.sidebar.classList.toggle('open');
+            }
+
+            // 3. UI State Management
+            updateState(newState) {
+                this.state = newState;
+                
+                // Reset Classes
+                this.micBtn.className = 'mic-btn';
+                this.micIcon.className = 'fa-solid';
+
+                switch(newState) {
+                    case 'idle':
+                        this.micBtn.classList.add('idle');
+                        this.micIcon.classList.add('fa-microphone');
+                        this.statusText.innerText = "Tap mic to speak";
+                        this.statusText.style.color = "var(--text-muted)";
+                        this.visualizer.stop();
+                        break;
+                    case 'listening':
+                        this.micBtn.classList.add('listening');
+                        this.micIcon.classList.add('fa-ear-listen');
+                        this.statusText.innerText = "Listening...";
+                        this.statusText.style.color = "var(--danger)";
+                        this.visualizer.startSimulation('#ef4444');
+                        break;
+                    case 'processing':
+                        this.micBtn.classList.add('processing');
+                        this.micIcon.classList.add('fa-circle-notch', 'fa-spin');
+                        this.statusText.innerText = "AI is thinking...";
+                        this.statusText.style.color = "var(--warning)";
+                        this.visualizer.stop();
+                        break;
+                    case 'speaking':
+                        this.micBtn.classList.add('speaking');
+                        this.micIcon.classList.add('fa-volume-high');
+                        this.statusText.innerText = "AI is speaking...";
+                        this.statusText.style.color = "var(--primary)";
+                        this.visualizer.startSimulation(this.isDarkTheme ? '#00d2ff' : '#0ea5e9');
+                        break;
+                }
+            }
+
+            // 4. Speech Recognition Logic
+            // --- এই অংশটুকু রিপ্লেস করুন ---
+initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        UIManager.showToast('আপনার ব্রাউজারে ভয়েস সাপোর্ট নেই। Chrome ব্যবহার করুন।', 'error');
+        return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = false; // একবারে একটি বাক্য শুনবে
+    this.recognition.interimResults = false; 
+    this.recognition.lang = this.language; // ভাষা সেট করা (bn-BD)
+
+    this.recognition.onstart = () => {
+        console.log("Recognition Started...");
+        this.updateState('listening');
+    };
+
+    this.recognition.onresult = (event) => {
+        console.log("Result received");
+        const transcript = event.results[0][0].transcript;
+        console.log("User Said: ", transcript);
+        
+        if (transcript.trim() !== "") {
+            this.processUserInput(transcript); // এআই এর কাছে পাঠানো
+        } else {
+            this.updateState('idle');
+        }
+    };
+
+    this.recognition.onerror = (event) => {
+        console.error("Speech Error Type: ", event.error);
+        this.updateState('idle');
+        
+        if(event.error === 'no-speech') {
+            UIManager.showToast('আপনি কিছু বলেননি। আবার চেষ্টা করুন।', 'warning');
+        } else if(event.error === 'not-allowed') {
+            UIManager.showToast('মাইক্রোফোন পারমিশন দিন।', 'error');
+        } else {
+            UIManager.showToast('ভয়েস এরর: ' + event.error, 'error');
+        }
+    };
+
+    this.recognition.onend = () => {
+        console.log("Recognition Ended.");
+        if (this.state === 'listening') {
+            this.updateState('idle');
+        }
+    };
+}
+
+// --- মাইক্রোফোন বাটন কন্ট্রোল ফিক্স ---
+toggleMic() {
+    if (this.state === 'processing') return;
+
+    if (this.state === 'speaking') {
+        this.audioPlayer.pause();
+        this.updateState('idle');
+        return;
+    }
+
+    if (this.state === 'listening') {
+        this.recognition.stop(); // ইউজার চাইলে ম্যানুয়ালি স্টপ করতে পারবে
+    } else {
+        try {
+            this.recognition.lang = this.language; // ভাষা নিশ্চিত করা
+            this.recognition.start();
+        } catch (e) {
+            console.error("Mic Start Error: ", e);
+            this.recognition.stop();
+        }
+    }
+}
+
+            // 5. Chat UI Logic
+            addMessageToUI(text, sender) {
+                const time = UIManager.formatTime();
+                const isUser = sender === 'user';
+                
+                const row = document.createElement('div');
+                row.className = `message-row ${isUser ? 'row-user' : 'row-ai'}`;
+                
+                // Formatted HTML
+                const formattedText = UIManager.parseMarkdown(text);
+                
+                // Safe string for TTS button
+                const safeStr = text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ');
+
+                let html = `
+                    <div class="message-content">
+                        <div class="avatar ${isUser ? 'avatar-user' : 'avatar-ai'}">
+                            <i class="fa-solid ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+                        </div>
+                        <div>
+                            <div class="bubble ${isUser ? 'bubble-user' : 'bubble-ai'}">
+                                <p>${formattedText}</p>
+                            </div>
+                            <div class="msg-meta">
+                                <span>${time}</span>
+                                ${!isUser ? `<i class="fa-solid fa-volume-high action-icon" onclick="app.speakText('${safeStr}')" title="Listen again"></i>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                row.innerHTML = html;
+                
+                // Insert before typing indicator
+                this.chatWindow.insertBefore(row, this.typingIndicator);
+                this.scrollToBottom();
+            }
+
+            scrollToBottom() {
+                this.chatWindow.scrollTo({
+                    top: this.chatWindow.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+
+            showTyping() {
+                this.typingIndicator.style.display = 'flex';
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            // 6. Core Business Logic (Fetch APIs)
+            async processUserInput(text) {
+    this.addMessageToUI(text, 'user'); // ইউজারের কথা চ্যাটে দেখাবে
+    this.updateState('processing');
+    this.showTyping();
+
+    try {
+        // এপিআই কল করার সময় 'cache: no-store' যোগ করা হয়েছে যাতে লেটেস্ট উত্তর আসে
+        const response = await fetch(`${this.LLM_API}${encodeURIComponent(text)}`, {
+            method: 'GET',
+            cache: 'no-store'
+        });
+
+        if (!response.ok) throw new Error('সার্ভারে সমস্যা হচ্ছে');
+
+        const aiResponseText = await response.text();
+
+        this.hideTyping();
+        if (aiResponseText) {
+            this.addMessageToUI(aiResponseText, 'ai');
+            this.speakText(aiResponseText);
+        } else {
+            throw new Error('ফাঁকা উত্তর এসেছে');
+        }
+
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        this.hideTyping();
+        this.updateState('idle');
+        this.addMessageToUI("দুঃখিত, আমি এখন উত্তর দিতে পারছি না। আবার চেষ্টা করুন।", 'ai');
+        UIManager.showToast('সার্ভার এরর!', 'error');
+    }
+}
+
+            // 7. Text-To-Speech (TTS) Logic
+            setupAudioEvents() {
+                this.audioPlayer.onended = () => {
+                    this.updateState('idle');
+                };
+                
+                this.audioPlayer.onerror = (e) => {
+                    console.warn("Custom TTS API Failed. Falling back to native Web Speech API.");
+                    // The error handling will trigger the fallback inside speakText
+                };
+            }
+
+            speakText(rawText) {
+                // Clean text for TTS (Remove markdown symbols)
+                const cleanText = rawText.replace(/[*#_`~]/g, '').trim();
+                
+                this.updateState('speaking');
+
+                // Generate URL based on provided API
+                const ttsUrl = `${this.TTS_API}${encodeURIComponent(cleanText)}`;
+                
+                this.audioPlayer.src = ttsUrl;
+                this.audioPlayer.playbackRate = this.voiceSpeed;
+                
+                // Play audio, catch error if URL is broken or network fails
+                this.audioPlayer.play().catch(error => {
+                    console.log("Audio Playback error, initializing fallback...", error);
+                    this.nativeTTSFallback(cleanText);
+                });
+            }
+
+            // Fallback Engine: If external API goes down
+            nativeTTSFallback(text) {
+                if (!window.speechSynthesis) {
+                    this.updateState('idle');
+                    UIManager.showToast('TTS not supported', 'error');
+                    return;
+                }
+
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = this.language;
+                utterance.rate = this.voiceSpeed;
+                utterance.pitch = 1;
+
+                utterance.onstart = () => this.updateState('speaking');
+                utterance.onend = () => this.updateState('idle');
+                utterance.onerror = (e) => {
+                    console.error("Native TTS Error", e);
+                    this.updateState('idle');
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            // 8. Utility Functions
+            clearChat() {
+                // Remove all rows except the first generic greeting and typing indicator
+                const rows = Array.from(this.chatWindow.querySelectorAll('.message-row'));
+                rows.forEach(row => {
+                    if (row !== this.typingIndicator && !row.innerHTML.includes('আমি আপনার <strong>এআই এসিস্ট্যান্ট</strong>')) {
+                        row.remove();
+                    }
+                });
+                
+                this.closeSettings();
+                if(window.innerWidth <= 768) this.sidebar.classList.remove('open');
+                
+                UIManager.showToast('Conversation History Cleared', 'success');
+            }
+        }
+
+        // ==========================================================================
+        // APP INITIALIZATION
+        // ==========================================================================
+        const app = new AIVoiceAssistant();
+        
+        // Handle Keyboard shortcuts (Spacebar to toggle mic if not typing)
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' && e.target === document.body && document.getElementById('welcome-screen').classList.contains('hidden')) {
+                e.preventDefault();
+                app.toggleMic();
+            }
+        });
+
+    </script>
+</body>
+</html>
